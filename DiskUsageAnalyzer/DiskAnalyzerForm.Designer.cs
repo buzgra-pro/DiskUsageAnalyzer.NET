@@ -34,7 +34,6 @@
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.treeView = new System.Windows.Forms.TreeView();
             this.imageListFolder = new System.Windows.Forms.ImageList(this.components);
-            this.circleMap = new DiskUsageAnalyzer.CircleMap();
             this.folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -57,6 +56,11 @@
             this.rightClickMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.viewThisItemAsTheRootToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.recordToDBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.backgroundWorkerDB = new System.ComponentModel.BackgroundWorker();
+            this.circleMap = new DiskUsageAnalyzer.CircleMap();
+            this.SetDB = new System.Windows.Forms.ToolStripButton();
+            this.txDatasource = new System.Windows.Forms.ToolStripTextBox();
             this.splitContainer.Panel1.SuspendLayout();
             this.splitContainer.Panel2.SuspendLayout();
             this.splitContainer.SuspendLayout();
@@ -100,26 +104,14 @@
             this.treeView.SelectedImageIndex = 0;
             this.treeView.Size = new System.Drawing.Size(254, 437);
             this.treeView.TabIndex = 0;
-            this.treeView.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView_NodeMouseDoubleClick);
             this.treeView.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView_NodeMouseClick);
+            this.treeView.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView_NodeMouseDoubleClick);
             // 
             // imageListFolder
             // 
             this.imageListFolder.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageListFolder.ImageStream")));
             this.imageListFolder.TransparentColor = System.Drawing.Color.Transparent;
             this.imageListFolder.Images.SetKeyName(0, "folder.png");
-            // 
-            // circleMap
-            // 
-            this.circleMap.DiskUsageAnalyzerForm = null;
-            this.circleMap.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.circleMap.LayerWidth = 75F;
-            this.circleMap.Location = new System.Drawing.Point(0, 0);
-            this.circleMap.MapDepth = 1;
-            this.circleMap.Name = "circleMap";
-            this.circleMap.RootItem = null;
-            this.circleMap.Size = new System.Drawing.Size(503, 437);
-            this.circleMap.TabIndex = 0;
             // 
             // folderBrowserDialog
             // 
@@ -157,13 +149,16 @@
             this.toolZoomIn,
             this.toolZoomOut,
             this.toolStripSeparator3,
-            this.toolAbout});
+            this.toolAbout,
+            this.SetDB,
+            this.txDatasource});
             this.toolBar.Location = new System.Drawing.Point(0, 0);
             this.toolBar.Name = "toolBar";
             this.toolBar.ShowItemToolTips = false;
             this.toolBar.Size = new System.Drawing.Size(769, 25);
             this.toolBar.TabIndex = 0;
             this.toolBar.Text = "Toolbar";
+            this.toolBar.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.toolBar_ItemClicked);
             // 
             // toolScanFolder
             // 
@@ -181,7 +176,8 @@
             this.scanPicturesTool,
             this.scanMusicTool,
             this.scanDesktopTool,
-            this.scanProgramsTool});
+            this.scanProgramsTool,
+            this.recordToDBToolStripMenuItem});
             this.toolScanSpecialFolder.Image = global::DiskUsageAnalyzer.Properties.Resources.drive_user;
             this.toolScanSpecialFolder.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolScanSpecialFolder.Name = "toolScanSpecialFolder";
@@ -193,7 +189,7 @@
             // 
             this.scanDocumentsTool.Image = global::DiskUsageAnalyzer.Properties.Resources.folder_page;
             this.scanDocumentsTool.Name = "scanDocumentsTool";
-            this.scanDocumentsTool.Size = new System.Drawing.Size(162, 22);
+            this.scanDocumentsTool.Size = new System.Drawing.Size(180, 22);
             this.scanDocumentsTool.Text = "Scan documents";
             this.scanDocumentsTool.Click += new System.EventHandler(this.scanDocumentsTool_Click);
             // 
@@ -201,7 +197,7 @@
             // 
             this.scanPicturesTool.Image = global::DiskUsageAnalyzer.Properties.Resources.picture;
             this.scanPicturesTool.Name = "scanPicturesTool";
-            this.scanPicturesTool.Size = new System.Drawing.Size(162, 22);
+            this.scanPicturesTool.Size = new System.Drawing.Size(180, 22);
             this.scanPicturesTool.Text = "Scan pictures";
             this.scanPicturesTool.Click += new System.EventHandler(this.scanPicturesTool_Click);
             // 
@@ -209,7 +205,7 @@
             // 
             this.scanMusicTool.Image = global::DiskUsageAnalyzer.Properties.Resources.music;
             this.scanMusicTool.Name = "scanMusicTool";
-            this.scanMusicTool.Size = new System.Drawing.Size(162, 22);
+            this.scanMusicTool.Size = new System.Drawing.Size(180, 22);
             this.scanMusicTool.Text = "Scan music";
             this.scanMusicTool.Click += new System.EventHandler(this.scanMusicTool_Click);
             // 
@@ -217,7 +213,7 @@
             // 
             this.scanDesktopTool.Image = global::DiskUsageAnalyzer.Properties.Resources.monitor;
             this.scanDesktopTool.Name = "scanDesktopTool";
-            this.scanDesktopTool.Size = new System.Drawing.Size(162, 22);
+            this.scanDesktopTool.Size = new System.Drawing.Size(180, 22);
             this.scanDesktopTool.Text = "Scan desktop";
             this.scanDesktopTool.Click += new System.EventHandler(this.scanDesktopTool_Click);
             // 
@@ -225,7 +221,7 @@
             // 
             this.scanProgramsTool.Image = global::DiskUsageAnalyzer.Properties.Resources.application_form;
             this.scanProgramsTool.Name = "scanProgramsTool";
-            this.scanProgramsTool.Size = new System.Drawing.Size(162, 22);
+            this.scanProgramsTool.Size = new System.Drawing.Size(180, 22);
             this.scanProgramsTool.Text = "Scan programs";
             this.scanProgramsTool.Click += new System.EventHandler(this.scanProgramsTool_Click);
             // 
@@ -280,8 +276,8 @@
             // 
             this.backgroundWorker.WorkerReportsProgress = true;
             this.backgroundWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker_DoWork);
-            this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_RunWorkerCompleted);
             this.backgroundWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker_ProgressChanged);
+            this.backgroundWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorker_RunWorkerCompleted);
             // 
             // rightClickMenu
             // 
@@ -306,6 +302,50 @@
             this.openFolderToolStripMenuItem.Size = new System.Drawing.Size(207, 22);
             this.openFolderToolStripMenuItem.Text = "Open folder";
             this.openFolderToolStripMenuItem.Click += new System.EventHandler(this.openFolderToolStripMenuItem_Click);
+            // 
+            // recordToDBToolStripMenuItem
+            // 
+            this.recordToDBToolStripMenuItem.Name = "recordToDBToolStripMenuItem";
+            this.recordToDBToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.recordToDBToolStripMenuItem.Text = "Record to DB";
+            this.recordToDBToolStripMenuItem.Click += new System.EventHandler(this.recordToDBToolStripMenuItem_Click);
+            // 
+            // backgroundWorkerDB
+            // 
+            this.backgroundWorkerDB.WorkerReportsProgress = true;
+            this.backgroundWorkerDB.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorkerDB_DoWork_1);
+            this.backgroundWorkerDB.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorkerDB_ProgressChanged);
+            this.backgroundWorkerDB.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.backgroundWorkerDB_RunWorkerCompleted_1);
+            // 
+            // circleMap
+            // 
+            this.circleMap.DiskUsageAnalyzerForm = null;
+            this.circleMap.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.circleMap.LayerWidth = 75F;
+            this.circleMap.Location = new System.Drawing.Point(0, 0);
+            this.circleMap.MapDepth = 1;
+            this.circleMap.Name = "circleMap";
+            this.circleMap.RootItem = null;
+            this.circleMap.Size = new System.Drawing.Size(503, 437);
+            this.circleMap.TabIndex = 0;
+            // 
+            // SetDB
+            // 
+            this.SetDB.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.SetDB.Image = ((System.Drawing.Image)(resources.GetObject("SetDB.Image")));
+            this.SetDB.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.SetDB.Name = "SetDB";
+            this.SetDB.Size = new System.Drawing.Size(23, 22);
+            this.SetDB.Text = "toolStripButton1";
+            this.SetDB.Click += new System.EventHandler(this.SetDB_Click);
+            // 
+            // txDatasource
+            // 
+            this.txDatasource.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.txDatasource.Name = "txDatasource";
+            this.txDatasource.Size = new System.Drawing.Size(100, 25);
+            this.txDatasource.Text = "Data Source=DESKTOP-BO2EKPI\\\\SQL2014;Initial Catalog=FileAnalysis;Integrated Secu" +
+    "rity=True";
             // 
             // DiskUsageAnalyzerForm
             // 
@@ -360,6 +400,10 @@
         private System.Windows.Forms.ToolStripMenuItem scanProgramsTool;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripButton toolAbout;
-	}
+        private System.Windows.Forms.ToolStripMenuItem recordToDBToolStripMenuItem;
+        private System.ComponentModel.BackgroundWorker backgroundWorkerDB;
+        private System.Windows.Forms.ToolStripButton SetDB;
+        private System.Windows.Forms.ToolStripTextBox txDatasource;
+    }
 }
 

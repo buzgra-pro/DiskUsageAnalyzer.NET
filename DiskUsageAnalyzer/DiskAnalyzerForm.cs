@@ -2,12 +2,14 @@
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.IO;
+using System.Configuration;
 
 namespace DiskUsageAnalyzer
 {
 	public partial class DiskUsageAnalyzerForm : Form
 	{
 		FolderAnalyzer analyzer;
+		FolderToDb sendToDB;
 		string scannedpath = "";
 		string selectedpath = "";
 
@@ -36,6 +38,18 @@ namespace DiskUsageAnalyzer
 			toolStripStatusLabel.Text = "Analyzing...";
 			backgroundWorker.RunWorkerAsync();
 		}
+
+
+		private void ScanFolderToDB(string path)
+		{
+			scannedpath = path;
+			toolBar.Enabled = false;
+			toolStripStatusLabel.Text = "Analyzing...";
+			backgroundWorkerDB.RunWorkerAsync();
+			
+		}
+
+
 
 		private void toolZoomIn_Click(object sender, EventArgs e)
 		{
@@ -90,6 +104,8 @@ namespace DiskUsageAnalyzer
 
 		private void DiskUsageAnalyzerForm_Load(object sender, EventArgs e)
 		{
+			txDatasource.Text= ConfigurationManager.AppSettings.Get("ConnStr");
+
 			treeView.Nodes.Clear();
 			circleMap.DiskUsageAnalyzerForm = this;
 		}
@@ -175,8 +191,91 @@ namespace DiskUsageAnalyzer
             ViewSelectedItemAsRoot();
         }
 
+		private void toolBar_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+		{
+
+		}
+
+		private void recordToDBToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+				ScanFolderToDB(folderBrowserDialog.SelectedPath);
+		}
+
+	
+	
+		private void backgroundWorkerDB_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+		{
+			toolStripStatusLabel.Text = "Preparing disk...";
+			toolStripStatusLabel.Invalidate();
+
+			if (e.Error == null)
+			{
+				FolderItem result = (FolderItem)e.Result;
+				foreach (FolderItem item in result.Children)
+				{
+					treeView.Nodes.Clear();
+					treeView.Nodes.Add(result.FolderNode);
+				}
+				toolStripStatusLabel.Text = "Finnished analyzing";
+			}
+			else
+				toolStripStatusLabel.Text = "Unexpected error during disk analysis";
+
+			toolBar.Enabled = true;
+			treeView.Nodes[0].Toggle();
 
 
+		}
 
+		private void backgroundWorkerDB_DoWork_1(object sender, DoWorkEventArgs e)
+		{
+						
+			sendToDB = new FolderToDb(scannedpath, backgroundWorkerDB,txDatasource.Text);
+			//sendToDB.ConStr = txDatasource.Text;
+
+			FolderItem root = sendToDB.AnalyzeFolder();
+			e.Result = root;
+		}
+
+		private void backgroundWorkerDB_ProgressChanged(object sender, ProgressChangedEventArgs e)
+		{
+			string currentfolder = (string)e.UserState;
+			toolStripStatusLabel.Text = "Scanning folder: " + currentfolder;
+			toolStripStatusLabel.Invalidate();
+		}
+
+		private void backgroundWorkerDB_RunWorkerCompleted_1(object sender, RunWorkerCompletedEventArgs e)
+		{
+			toolStripStatusLabel.Text = "Preparing disk...";
+			toolStripStatusLabel.Invalidate();
+
+			if (e.Error == null)
+			{
+				FolderItem result = (FolderItem)e.Result;
+				foreach (FolderItem item in result.Children)
+				{
+					treeView.Nodes.Clear();
+					treeView.Nodes.Add(result.FolderNode);
+				}
+				FolderToDb.DoBulkInsert();
+				FolderToDb.SqlCon.Close();
+				toolStripStatusLabel.Text = "Finnished analyzing";
+				
+			}
+			else
+				toolStripStatusLabel.Text = "Unexpected error during disk analysis";
+
+			toolBar.Enabled = true;
+			treeView.Nodes[0].Toggle();
+			
+
+
+		}
+
+		private void SetDB_Click(object sender, EventArgs e)
+		{
+
+		}
 	}
 }
